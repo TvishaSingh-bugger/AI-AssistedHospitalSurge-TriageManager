@@ -1,3 +1,0 @@
-# AI-AssistedHospitalSurge-TriageManager
-
-In emergency cases hospitals may receive a large number of patients suddenly, while resources such as ICU beds, ventilatators, oxygen, blood and medical staff are only limited. A normal resource management system can show the current resources availability, but it may not indicate how many emergency cases are expected in future or which resources may become inadeqquate. Our project focuses mainly on developing a system that can manage emergency cases and available resources while also predicting future emergency cases and resource reqiurements. If the predicted demand is higher than the available resources, the system will generate a shortage warning in advance so that hospital staff can prepare acordingly.
