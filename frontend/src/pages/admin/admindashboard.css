@@ -1,0 +1,75 @@
+.admin-dashboard {
+  min-height: 100vh;
+  display: flex;
+  background: #f4f8fb;
+  font-family: Arial, sans-serif;
+}
+
+/* Sidebar */
+
+.sidebar {
+  width: 230px;
+  min-height: 100vh;
+  background: #075985;
+  color: white;
+  padding: 25px 15px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar h2 {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sidebar button {
+  border: none;
+  background: transparent;
+  color: white;
+  padding: 12px;
+  border-radius: 7px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.sidebar button:hover,
+.sidebar .active {
+  background: #0c749f;
+}
+
+.logout {
+  margin-top: auto;
+}
+
+/* Main content */
+
+.main-content {
+  flex: 1;
+  padding: 30px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.topbar h1 {
+  margin: 0;
+  color: #075985;
+  font-size: 28px;
+}
+
+.admin-profile {
+  background: white;
+  padding: 12px 18px;
+  border-radius: 8px;
+}
