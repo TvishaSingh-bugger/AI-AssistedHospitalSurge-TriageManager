@@ -1,0 +1,13 @@
+requirement_id,case_id,resource_type,blood_group,required_quantity,notes
+1,1,ICU_BED,NULL,1,"Synthetic example requirement"
+2,1,OXYGEN_CYLINDER,NULL,1,"Synthetic example requirement"
+3,1,VENTILATOR,NULL,1,"Synthetic example requirement"
+4,2,GENERAL_BED,NULL,1,"Synthetic example requirement"
+5,3,ICU_BED,NULL,1,"Synthetic example requirement"
+6,3,VENTILATOR,NULL,1,"Synthetic example requirement"
+7,4,GENERAL_BED,NULL,1,"Synthetic example requirement"
+8,5,ICU_BED,NULL,1,"Synthetic example requirement"
+9,5,OXYGEN_CYLINDER,NULL,1,"Synthetic example requirement"
+10,6,GENERAL_BED,NULL,1,"Synthetic example requirement"
+11,7,GENERAL_BED,NULL,1,"Synthetic example requirement"
+12,8,ICU_BED,NULL,1,"Synthetic example requirement"
