@@ -1,0 +1,7 @@
+staff_id,hospital_id,staff_code,staff_name,role,available_count,shift_start,shift_end
+1,1,D-DOC-01,"Demo Doctor 1",Doctor,2,NULL,NULL
+2,1,D-NUR-01,"Demo Nurse 1",Nurse,4,NULL,NULL
+3,1,D-TECH-01,"Demo Technician 1",Technician,2,NULL,NULL
+4,2,H-DOC-01,"Demo Doctor 2",Doctor,2,NULL,NULL
+5,2,H-NUR-01,"Demo Nurse 2",Nurse,3,NULL,NULL
+6,3,R-DOC-01,"Demo Doctor 3",Doctor,1,NULL,NULL
