@@ -1,38 +1,90 @@
 from pathlib import Path
 import pandas as pd
+import os
+import mysql.connector
+from dotenv import load_dotenv
 
 PROJECT_ROOT=Path(__file__).resolve().parents[2]
-DATASET_PATH=PROJECT_ROOT / "Sample-Dataset.csv"
+load_dotenv(PROJECT_ROOT/".env")
 
-def load_dataset():
-    path=DATASET_PATH
-    if not path.exists():
-        raise FileNotFoundError(f"Dataset not found: {path}")
-    df=pd.read_csv(path)
-    df.columns=(
-        df.columns.str.strip().str.lower().str.replace(" ", "_", regex=False)
+def get_connection():
+    return mysql.connector.connect(
+        host=os.getenv("DB_HOST","localhost"),
+        user=os.getenv("DB_USER"),
+        port=int(os.getenv("DB_PORT", 3306)),
+        password=os.getenv("DB_PASSWORD"),
+        database=os.getenv("DB_NAME","hospital_surge_db")
     )
+def load_dataset():
+    connection=get_connection()
+    try:
+        query="""SELECT
+                c.case_id,
+                c.hospital_id,
+                h.hospital_name AS hospital,
+                c.case_type,
+                c.triage_level,
+                c.priority,
+                c.arrival_time AS date,
+                c.arrival_time_units,
+                c.burst_time,
+                c.remaining_time,
+                c.process_state
+            FROM emergency_cases AS c
+            JOIN hospitals AS h
+                ON h.hospital_id = c.hospital_id
+            ORDER BY c.arrival_time, c.case_id"""
+        df=pd.read_sql(query, connection)
+    finally:
+        connection.close()
     if df.empty:
-        raise ValueError("The dataset is empty")
+        raise ValueError("No data found in the database.")
+    df.columns=(df.columns.str.strip().str.lower().str.replace(" ","_",regex=False))
     return df
 
+def load_resource_history():
+    connection=get_connection()
+    try:
+        query="""SELECT
+                ri.hospital_id,
+                ri.resource_type,
+                rh.recorded_at,
+                rh.total_quantity,
+                rh.available_quantity,
+                rh.used_quantity
+                FROM resource_history AS rh
+                JOIN resource_inventory AS ri
+                ON ri.resource_id = rh.resource_id
+                ORDER BY rh.recorded_at, ri.hospital_id, ri.resource_type
+                """
+        df=pd.read_sql(query, connection)
+    finally:
+        connection.close()
+    if df.empty:
+        raise ValueError("No data found in the database.")
+    df.columns=(df.columns.str.strip().str.lower().str.replace(" ","_",regex=False))
+    return df
 
 def clean_dataset(df):
-    df=df.copy()
-    df=df.drop_duplicates()
+    df=df.copy().drop_duplicates()
     if "date" in df.columns:
         df["date"]=pd.to_datetime(
             df["date"],
             dayfirst=True,
             errors="coerce"
         )
-    for column in df.columns:
-        if column not in ("date","hospital"):
+        df=df.dropna(subset=["date"])
+    numeric_columns=[
+        "priority",
+        "arrival_time_units",
+        "burst_time",
+        "remaining_time",
+    ]
+    for column in numeric_columns:
+        if column in df.columns:
             df[column]=pd.to_numeric(
                 df[column],errors="coerce"
             )
-    if "date" in df.columns:
-        df=df.dropna(subset=["date"])
     return df.reset_index(drop=True)
 
 def prepare_features(df,target_column):
@@ -59,9 +111,17 @@ def prepare_features(df,target_column):
         X["day_of_week"] = X["date"].dt.dayofweek
         X["month"] = X["date"].dt.month
         X = X.drop(columns=["date"])
-    if "hospital" in X.columns:
-        X = pd.get_dummies(
-            X, columns=["hospital"], dtype=int
+    categorical_columns=X.select_dtypes(
+        include=["object","category"]
+    ).columns.tolist()
+    if categorical_columns:
+        X=pd.get_dummies(
+            X,
+            columns=categorical_columns,
+            dtype=int,
         )
-    X = X.replace([float("inf"), float("-inf")], float("nan"))
+    X=X.replace(
+        [float("inf"),float("-inf")],
+        float("nan"),
+    )
     return X,y
