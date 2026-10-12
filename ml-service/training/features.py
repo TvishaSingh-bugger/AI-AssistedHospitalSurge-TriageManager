@@ -125,3 +125,34 @@ def prepare_features(df,target_column):
         float("nan"),
     )
     return X,y
+
+def build_training_dataset(interval="30min"):
+    cases=clean_dataset(load_dataset())
+    if cases.empty:
+        raise ValueError("No emergency cases available.")
+    cases["date"]=pd.to_datetime(cases["date"], errors="coerce")
+    cases = cases.dropna(subset=["date"])
+    cases["is_critical"]=(
+        cases["triage_level"].str.lower() == "critical"
+    ).astype(int)
+    grouped=(
+        cases.set_index("date")
+        .groupby("hospital_id")
+        .resample(interval)
+        .agg(
+            emergency_cases=("case_id", "count"),
+            critical_cases=("is_critical", "sum"),
+        )
+        .reset_index()
+        .sort_values(["hospital_id", "date"])
+    )
+    grouped["next_emergency"]=(
+        grouped.groupby("hospital_id")["emergency_cases"].shift(-1)
+    )
+    grouped["next_critical"]=(
+        grouped.groupby("hospital_id")["critical_cases"].shift(-1)
+    )
+    grouped=grouped.dropna(
+        subset=["next_emergency", "next_critical"]
+    )
+    return grouped.reset_index(drop=True)
