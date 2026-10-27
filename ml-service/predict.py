@@ -1,64 +1,33 @@
 from pathlib import Path
 import sys
 import joblib
+import numpy as np
 import pandas as pd
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-MODEL_DIR = PROJECT_ROOT / "ml-service" / "models"
-TRAINING_DIR = PROJECT_ROOT / "ml-service" / "training"
-sys.path.insert(
-    0,
-    str(TRAINING_DIR)
-)
-from features import build_training_dataset
+ML_SERVICE_DIR = Path(__file__).resolve().parent
+MODEL_DIR = ML_SERVICE_DIR / "models"
+TRAINING_DIR = ML_SERVICE_DIR / "training"
+sys.path.insert(0, str(TRAINING_DIR))
+from features import build_interval_dataset
 def main():
-    df = build_training_dataset(interval="1min")
-    if df.empty:
+    models = [MODEL_DIR / "next_emergency.joblib", MODEL_DIR / "next_critical.joblib"]
+    available = [path for path in models if path.exists()]
+    if not available:
+        raise FileNotFoundError("No trained demand models found. Run training/train.py first.")
+    interval = joblib.load(available[0]).get("interval", "30min")
+    data = build_interval_dataset(interval=interval)
+    if data.empty:
         print("No data available for prediction.")
         return
-    latest = (
-        df.sort_values("date")
-        .groupby("hospital_id", as_index=False)
-        .tail(1)
-        .copy()
-    )
-    for target in ["next_emergency", "next_critical"]:
-        model_path = MODEL_DIR / f"{target}.joblib"
-        if not model_path.exists():
-            print(f"Model not found: {model_path}")
-            continue
-        bundle = joblib.load(model_path)
-        model = bundle["model"]
-        features = bundle["features"]
-        excluded = [
-            "next_emergency",
-            "next_critical",
-            "emergency_cases",
-            "critical_cases",
-            "date",
-        ]
-        X = latest.drop(
-            columns=excluded,
-            errors="ignore"
-        ).copy()
-        categorical = X.select_dtypes(
-            include=["object", "category"]
-        ).columns.tolist()
-        if categorical:
-            X = pd.get_dummies(
-                X, columns=categorical, dtype=int
-            )
-        X = X.reindex(columns=features, fill_value=0)
-        predictions = model.predict(X).clip(min=0)
-        latest[target + "_prediction"] = predictions
-    columns = ["hospital_id", "date"]
-    for target in [
-        "next_emergency_prediction",
-        "next_critical_prediction",
-    ]:
-        if target in latest.columns:
-            columns.append(target)
-    print("\nHospital demand predictions:")
+    latest = data.sort_values("date").groupby("hospital_id", sort=False).tail(1).copy()
+    for path in available:
+        bundle = joblib.load(path)
+        X = latest.reindex(columns=bundle["features"]).replace([np.inf, -np.inf], np.nan)
+        latest[bundle["target"] + "_prediction"] = np.maximum(0, bundle["model"].predict(X))
+    columns = ["hospital_id", "date", "emergency_cases", "critical_cases"]
+    columns += [name for name in ("next_emergency_prediction", "next_critical_prediction") if name in latest]
+    print("Predicted demand for the interval following each hospital's latest observed interval:")
     print(latest[columns].to_string(index=False))
+
 
 if __name__ == "__main__":
     main()
