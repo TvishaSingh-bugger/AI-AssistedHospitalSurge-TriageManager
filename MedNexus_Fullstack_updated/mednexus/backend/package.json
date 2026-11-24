@@ -1,0 +1,25 @@
+{
+  "name": "mednexus-backend",
+  "version": "1.0.0",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "setup-db": "node scripts/setupDb.js",
+    "setup-db:reset": "node scripts/setupDb.js --reset",
+    "setup-db:no-ml": "node scripts/setupDb.js --skip-ml",
+    "seed-users": "node scripts/seedUsers.js",
+    "refresh-demo": "node scripts/refreshDemo.js",
+    "smoke-test": "node scripts/smokeTest.js",
+    "test-db": "node test-db.js",
+    "demo": "node demo.js",
+    "check": "node --check server.js && node --check dispatcher.js && node --check schedulerService.js && node --check caseService.js && node --check auth.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^16.4.7",
+    "express": "^5.3.0",
+    "mysql2": "^3.24.5"
+  }
+}
